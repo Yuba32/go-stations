@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"net/http"
 
 	"github.com/TechBowl-japan/go-stations/model"
 	"github.com/TechBowl-japan/go-stations/service"
@@ -17,6 +18,30 @@ func NewTODOHandler(svc *service.TODOService) *TODOHandler {
 	return &TODOHandler{
 		svc: svc,
 	}
+}
+
+func (h *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
+
+	switch r.Method {
+	case http.MethodPost:
+		subject := r.PostForm.Get("subject")
+		description := r.PostForm.Get("description")
+
+		if subject != "" {
+			h.svc.CreateTODO(r.Context(), subject, description)
+
+			w.WriteHeader(http.StatusOK)
+
+		} else {
+			w.WriteHeader(http.StatusBadRequest)
+
+		}
+
+	default:
+		w.WriteHeader(http.StatusBadRequest)
+
+	}
+
 }
 
 // Create handles the endpoint that creates the TODO.
