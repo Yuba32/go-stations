@@ -53,9 +53,6 @@ func realMain() error {
 	// NOTE: 新しいエンドポイントの登録はrouter.NewRouterの内部で行うようにする
 	mux := router.NewRouter(todoDB)
 
-	// TODO: サーバーをlistenする
-
-	// mux.Handle("/healthz", http.HandlerFunc(mux.ServeHTTP))
 	mux.HandleFunc("/healthz", handler.NewHealthzHandler().ServeHTTP)
 	mux.HandleFunc("/todos", handler.NewTODOHandler(service.NewTODOService(todoDB)).ServeHTTP)
 

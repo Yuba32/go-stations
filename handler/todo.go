@@ -2,6 +2,7 @@ package handler
 
 import (
 	"context"
+	"encoding/json"
 	"net/http"
 
 	"github.com/TechBowl-japan/go-stations/model"
@@ -24,18 +25,40 @@ func (h *TODOHandler) ServeHTTP(w http.ResponseWriter, r *http.Request) {
 
 	switch r.Method {
 	case http.MethodPost:
-		subject := r.PostForm.Get("subject")
-		description := r.PostForm.Get("description")
 
-		if subject != "" {
-			h.svc.CreateTODO(r.Context(), subject, description)
-
-			w.WriteHeader(http.StatusOK)
-
-		} else {
+		// Content-Typeがapplication/jsonでなければ400を返す
+		ct := r.Header.Get("Content-Type")
+		if ct != "application/json" {
 			w.WriteHeader(http.StatusBadRequest)
-
+			return
 		}
+
+		// リクエストボディをデコードする
+		req := &model.CreateTODORequest{}
+		err := json.NewDecoder(r.Body).Decode(req)
+		if err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// Subjectが空の場合は400を返す
+		if req.Subject == "" {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+
+		// 格納し,結果をjsonにする
+		// h.svc.CreateTODO(r.Context(), req.Subject, req.Description)
+		todo, nil := h.svc.CreateTODO(r.Context(), req.Subject, req.Description)
+
+		res := &model.CreateTODOResponse{TODO: *todo}
+		err = json.NewEncoder(w).Encode(res)
+		if err != nil {
+			w.WriteHeader(http.StatusInternalServerError)
+			return
+		}
+
+		// jsonを返す
 
 	default:
 		w.WriteHeader(http.StatusBadRequest)
